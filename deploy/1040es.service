@@ -1,0 +1,17 @@
+[Unit]
+Description=1040ES Calculator Uvicorn Gunicorn
+After=network.target
+
+[Service]
+User=youruser
+Group=yourgroup
+WorkingDirectory=/path/to/1040es_calculator
+Environment="PATH=/path/to/miniconda3/envs/1040es_py312/bin"
+Environment="PYTHONPATH=/path/to/1040es_calculator/src"
+ExecStart=/path/to/miniconda3/envs/1040es_py312/bin/uvicorn estimated_tax_calculator.app:app --host 127.0.0.1 --port 8765 --workers 4
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1040-ES Calculator — Quarterly Estimated Tax</title>
+    <meta name="description"
+        content="Calculate your quarterly 1040ES estimated tax payments, check safe harbor eligibility, and find the optimal payment strategy.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-glow"></div>
+            <h1>1040<span class="accent">-ES</span> Calculator</h1>
+            <p class="subtitle">Calculate Minimal Quarterly Estimated Tax Payments</p>
+            <div class="disclaimer-banner">
+                ⚠️ This tool is for educational and estimation purposes only and does not constitute financial or tax
+                advice.
+            </div>
+        </header>
+
+        <form id="tax-form" method="post" action="/calculate">
+            <div class="form-grid">
+
+                <!-- Filing Status and Tax Year -->
+                <section class="card card-full">
+                    <h2 class="card-title">
+                        <span class="card-icon">📋</span>
+                        Tax Profile
+                    </h2>
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="tax_year">Tax Year</label>
+                            <select id="tax_year" name="tax_year">
+                                {% set ty = form.tax_year|int if form else 2026 %}
+                                <option value="2026" {% if ty==2026 %}selected{% endif %}>2026</option>
+                                <option value="2025" {% if ty==2025 %}selected{% endif %}>2025</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="filing_status">Status</label>
+                            <select id="filing_status" name="filing_status">
+                                <option value="single" {% if form and form.filing_status=='single' %}selected{% endif
+                                    %}>Single</option>
+                                <option value="married_filing_jointly" {% if form and
+                                    form.filing_status=='married_filing_jointly' %}selected{% endif %}>Married Filing
+                                    Jointly</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- YTD Income & Withholding -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="card-icon">💰</span>
+                        YTD Income & Withholding
+                    </h2>
+                    <div class="field">
+                        <label for="ytd_tax_withheld">YTD Federal Tax Withheld</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="ytd_tax_withheld" name="ytd_tax_withheld"
+                                value="{{ form.ytd_tax_withheld if form else '' }}" step="0.01" min="0"
+                                placeholder="15000" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="ytd_taxable_income">YTD Taxable Income
+                            <span class="info-tip"
+                                data-tip="Exclude all pre-tax deductions: pre-tax 401(k), medical/dental/vision insurance premiums, HSA contributions, FSA, etc.">ℹ️</span>
+                        </label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="ytd_taxable_income" name="ytd_taxable_income"
+                                value="{{ form.ytd_taxable_income if form else '' }}" step="0.01" min="0"
+                                placeholder="75000" required>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Remaining Paycheck Projections -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="card-icon">📆</span>
+                        Remaining Paychecks
+                        <span class="info-tip"
+                            data-tip="Assuming the paycheck does not change for the remainder of this year.">ℹ️</span>
+                    </h2>
+                    <div class="field">
+                        <label for="remaining_paychecks">Remaining Paychecks</label>
+                        <input type="number" id="remaining_paychecks" name="remaining_paychecks"
+                            value="{{ form.remaining_paychecks if form else '' }}" min="0" placeholder="18" required>
+                    </div>
+                    <div class="field">
+                        <label for="estimated_income_per_paycheck">Est. Income per Paycheck</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="estimated_income_per_paycheck" name="estimated_income_per_paycheck"
+                                value="{{ form.estimated_income_per_paycheck if form else '' }}" step="0.01" min="0"
+                                placeholder="5500" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="estimated_withholding_per_paycheck">Est. Withholding per Paycheck</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="estimated_withholding_per_paycheck"
+                                name="estimated_withholding_per_paycheck"
+                                value="{{ form.estimated_withholding_per_paycheck if form else '' }}" step="0.01"
+                                min="0" placeholder="900" required>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RSU / Company Equity -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="card-icon">📈</span>
+                        RSU / Company Equity
+                        <span class="info-tip"
+                            data-tip="Standard supplemental withholding rate for equity vests is 22%.">ℹ️</span>
+                    </h2>
+                    <div class="field">
+                        <label for="remaining_unvested_shares">Remaining Unvested Shares</label>
+                        <input type="number" id="remaining_unvested_shares" name="remaining_unvested_shares"
+                            value="{{ form.remaining_unvested_shares if form else '0' }}" min="0" placeholder="200">
+                    </div>
+                    <div class="field">
+                        <label for="estimated_share_price">Estimated Share Price</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="estimated_share_price" name="estimated_share_price"
+                                value="{{ form.estimated_share_price if form else '0' }}" step="0.01" min="0"
+                                placeholder="250">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Other Remaining Company Income -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="card-icon">💼</span>
+                        Other Remaining Company Income
+                        <span class="info-tip"
+                            data-tip="Undistributed bonuses, on-call compensation, referral bonuses, signing bonus remainder, etc.; Taxed at 22% by default.">ℹ️</span>
+                    </h2>
+                    <div class="field">
+                        <label for="other_company_income">Est. Remaining Other Income</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="other_company_income" name="other_company_income"
+                                value="{{ form.other_company_income if form else '0' }}" step="0.01" min="0"
+                                placeholder="5000">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Estimated Capital Gains -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="card-icon">📊</span>
+                        Estimated Capital Gains
+                    </h2>
+                    <div class="field">
+                        <label for="short_term_capital_gains">Est. Short-Term Capital Gains
+                            <span class="info-tip"
+                                data-tip="Gains from assets held ≤ 1 year. Taxed as ordinary income.">ℹ️</span>
+                        </label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="short_term_capital_gains" name="short_term_capital_gains"
+                                value="{{ form.short_term_capital_gains if form else '0' }}" step="0.01"
+                                placeholder="0">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="long_term_capital_gains">Est. Long-Term Capital Gains
+                            <span class="info-tip"
+                                data-tip="Gains from assets held > 1 year. Taxed at preferential rates (0%, 15%, or 20%).">ℹ️</span>
+                        </label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="long_term_capital_gains" name="long_term_capital_gains"
+                                value="{{ form.long_term_capital_gains if form else '0' }}" step="0.01"
+                                placeholder="10000">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Prior Year & Estimated Payments -->
+                <section class="card">
+                    <h2 class="card-title">
+                        <span class="card-icon">🏛️</span>
+                        Prior Year & Payments
+                    </h2>
+                    <div class="field">
+                        <label for="previous_year_tax">Previous Year Total Tax</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="previous_year_tax" name="previous_year_tax"
+                                value="{{ form.previous_year_tax if form else '' }}" step="0.01" min="0"
+                                placeholder="65000" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="estimated_tax_already_paid">Estimated Tax Already Paid
+                            <span class="info-tip"
+                                data-tip="Total 1040ES payments you've already submitted this year.">ℹ️</span>
+                        </label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="estimated_tax_already_paid" name="estimated_tax_already_paid"
+                                value="{{ form.estimated_tax_already_paid if form else '0' }}" step="0.01" min="0"
+                                placeholder="0">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="remaining_quarters">Remaining Quarters</label>
+                        <select id="remaining_quarters" name="remaining_quarters">
+                            {% set rq = form.remaining_quarters|int if form else 4 %}
+                            <option value="4" {% if rq==4 %}selected{% endif %}>4 (Full year)</option>
+                            <option value="3" {% if rq==3 %}selected{% endif %}>3 (Starting Q2)</option>
+                            <option value="2" {% if rq==2 %}selected{% endif %}>2 (Starting Q3)</option>
+                            <option value="1" {% if rq==1 %}selected{% endif %}>1 (Q4 only)</option>
+                        </select>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" id="calculate-btn" class="btn-primary">
+                    <span class="btn-text">Calculate Estimated Tax</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+        </form>
+
+        {% if result %}
+        <div id="results" class="results-section">
+            <h2 class="section-title">Results</h2>
+
+            <div class="results-grid">
+
+                <!-- Income Breakdown -->
+                <section class="result-card">
+                    <h3>Income Breakdown</h3>
+                    <table class="result-table">
+                        <tbody>
+                            <tr>
+                                <td colspan="2" style="padding-top: 0.5rem; padding-bottom: 0.25rem; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright); opacity: 0.9;">
+                                    Ordinary Income
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Current W-2 Taxable Income</td>
+                                <td class="amount">{{ result.tax_breakdown.current_w2 | currency }}</td>
+                            </tr>
+                            <tr>
+                                <td>Est. Remaining W-2 Taxable Income</td>
+                                <td class="amount">{{ result.tax_breakdown.remaining_w2 | currency }}</td>
+                            </tr>
+                            <tr class="sub-row">
+                                <td class="indent">↳ Base Salary</td>
+                                <td class="amount dim">{{ result.tax_breakdown.remaining_base_salary | currency }}</td>
+                            </tr>
+                            {% if result.tax_breakdown.rsu_income > 0 %}
+                            <tr class="sub-row">
+                                <td class="indent">↳ RSU</td>
+                                <td class="amount dim">{{ result.tax_breakdown.rsu_income | currency }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if result.tax_breakdown.other_company_income > 0 %}
+                            <tr class="sub-row">
+                                <td class="indent">↳ Other Company Income</td>
+                                <td class="amount dim">{{ result.tax_breakdown.other_company_income | currency }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if result.tax_breakdown.short_term_capital_gains != 0 %}
+                            <tr>
+                                <td>Est. Short-Term Capital Gains</td>
+                                <td class="amount">{{ result.tax_breakdown.short_term_capital_gains | currency }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if result.tax_breakdown.long_term_capital_gains > 0 %}
+                            <tr>
+                                <td>Est. Long-Term Capital Gain</td>
+                                <td class="amount">{{ result.tax_breakdown.long_term_capital_gains | currency }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr class="total-row highlight">
+                                <td><strong>Est. Adjusted Gross Income (AGI)</strong></td>
+                                <td class="amount"><strong>{{ result.tax_breakdown.agi | currency }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Tax Computation -->
+                <section class="result-card">
+                    <h3>Tax Computation</h3>
+                    <table class="result-table">
+                        <tbody>
+                            <tr>
+                                <td>Standard Deduction</td>
+                                <td class="amount deduction">−{{ result.tax_breakdown.standard_deduction | currency }}</td>
+                            </tr>
+                            <tr class="total-row highlight">
+                                <td><strong>Taxable Ordinary Income</strong></td>
+                                <td class="amount"><strong>{{ result.tax_breakdown.ordinary_income | currency }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Ordinary Income Tax
+                                    <span class="detail">on {{ result.tax_breakdown.ordinary_income | currency }}</span>
+                                </td>
+                                <td class="amount">{{ result.tax_breakdown.ordinary_tax | currency }}</td>
+                            </tr>
+                            {% if result.tax_breakdown.short_term_capital_gains > 0 %}
+                            <tr class="sub-row">
+                                <td class="indent">↳ includes STCG tax</td>
+                                <td class="amount dim">{{ result.tax_breakdown.stcg_tax | currency }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td>Long-Term Capital Gains Tax
+                                    <span class="detail">on {{ result.tax_breakdown.long_term_capital_gains | currency
+                                        }}</span>
+                                </td>
+                                <td class="amount">{{ result.tax_breakdown.ltcg_tax | currency }}</td>
+                            </tr>
+                            <tr>
+                                <td>NIIT (3.8% Surtax)
+                                    <span class="tooltip-inline"
+                                        data-tip="Net Investment Income Tax — applies to investment income (both short-term and long-term gains) when AGI exceeds $200k (single) / $250k (MFJ)">ℹ️</span>
+                                </td>
+                                <td class="amount">{{ result.tax_breakdown.niit | currency }}</td>
+                            </tr>
+                            <tr class="total-row highlight">
+                                <td><strong>Estimated Total Federal Tax</strong></td>
+                                <td class="amount"><strong>{{ result.tax_breakdown.total_tax | currency }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Withholding Summary -->
+                <section class="result-card">
+                    <h3>Withholding Summary</h3>
+                    <table class="result-table">
+                        <tbody>
+                            <tr>
+                                <td>YTD Withholding</td>
+                                <td class="amount">{{ result.tax_breakdown.ytd_withholding | currency }}</td>
+                            </tr>
+                            <tr>
+                                <td>Remaining Paycheck Withholding</td>
+                                <td class="amount">{{ result.tax_breakdown.remaining_paycheck_withholding | currency }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>RSU Withholding (22% flat)</td>
+                                <td class="amount">{{ result.tax_breakdown.rsu_withholding | currency }}</td>
+                            </tr>
+                            {% if result.tax_breakdown.other_income_withholding > 0 %}
+                            <tr>
+                                <td>Other Company Income Withholding</td>
+                                <td class="amount">{{ result.tax_breakdown.other_income_withholding | currency }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr class="total-row highlight">
+                                <td><strong>Total Projected Withholding</strong></td>
+                                <td class="amount"><strong>{{ result.tax_breakdown.total_withholding | currency
+                                        }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Safe Harbor Analysis -->
+                <section
+                    class="result-card card-wide {% if result.safe_harbor.meets_safe_harbor %}harbor-pass{% else %}harbor-fail{% endif %}">
+                    <h3>Safe Harbor Analysis</h3>
+
+                    <div class="harbor-status">
+                        {% if result.safe_harbor.meets_safe_harbor %}
+                        <div class="status-badge pass">✅ Safe Harbor Met</div>
+                        <p>Your projected withholding{% if result.safe_harbor.total_payments >
+                            result.tax_breakdown.total_withholding %} + estimated payments{% endif %} meets safe harbor
+                            requirements. No additional estimated payments needed.</p>
+                        {% else %}
+                        <div class="status-badge fail">⚠️ Safe Harbor NOT Met</div>
+                        <p>Your projected withholding alone does not meet either safe harbor threshold. Estimated
+                            quarterly payments are recommended.</p>
+                        {% endif %}
+                    </div>
+
+                    <table class="result-table">
+                        <tbody>
+                            <tr>
+                                <td>Total Payments (Withholding + Est. Paid)</td>
+                                <td class="amount">{{ result.safe_harbor.total_payments | currency }}</td>
+                            </tr>
+                            <tr>
+                                <td>90% of Current Year Tax</td>
+                                <td
+                                    class="amount {% if result.safe_harbor.meets_current_year_harbor %}pass-text{% else %}fail-text{% endif %}">
+                                    {{ result.safe_harbor.current_year_90_pct | currency }}
+                                    {% if result.safe_harbor.meets_current_year_harbor %}✓{% else %}✗{% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>110% of Prior Year Tax</td>
+                                <td
+                                    class="amount {% if result.safe_harbor.meets_prior_year_harbor %}pass-text{% else %}fail-text{% endif %}">
+                                    {{ result.safe_harbor.prior_year_110_pct | currency }}
+                                    {% if result.safe_harbor.meets_prior_year_harbor %}✓{% else %}✗{% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {% if not result.safe_harbor.meets_safe_harbor %}
+                    <div class="quarterly-recommendation">
+                        <h4>Quarterly Payment Comparison</h4>
+                        <div class="route-cards">
+                            <div
+                                class="route-card {% if result.safe_harbor.recommended_route == 'Current year × 90%' %}recommended{% endif %}">
+                                {% if result.safe_harbor.recommended_route == 'Current year × 90%' %}
+                                <div class="recommended-badge">✨ Recommended</div>
+                                {% endif %}
+                                <div class="route-label">Current Year × 90%</div>
+                                <div class="route-amount">{{ result.safe_harbor.current_year_quarterly | whole }}</div>
+                                <div class="route-detail">per quarter</div>
+                            </div>
+                            <div
+                                class="route-card {% if result.safe_harbor.recommended_route == 'Prior year × 110%' %}recommended{% endif %}">
+                                {% if result.safe_harbor.recommended_route == 'Prior year × 110%' %}
+                                <div class="recommended-badge">✨ Recommended</div>
+                                {% endif %}
+                                <div class="route-label">Prior Year × 110%</div>
+                                <div class="route-amount">{{ result.safe_harbor.prior_year_quarterly | whole }}</div>
+                                <div class="route-detail">per quarter</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </section>
+
+            </div>
+        </div>
+        {% endif %}
+
+        <footer class="app-footer">
+            <p>⚠️ This calculator provides estimates only. Consult a qualified tax professional for advice specific to
+                your situation.</p>
+            <p class="footer-meta">Federal tax only · 2025/2026 tax years · Based on IRS Projections</p>
+        </footer>
+    </div>
+
+    <!-- Global tooltip used by JavaScript -->
+    <div id="global-tooltip" class="global-tooltip"></div>
+
+    <script src="/static/app.js?v=3"></script>
+</body>
+
+</html>
