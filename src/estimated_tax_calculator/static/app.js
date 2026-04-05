@@ -110,7 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Soft clear all inputs
             const inputs = document.querySelectorAll('#tax-form input[type="number"]');
             inputs.forEach(input => {
-                input.value = ''; // clears to placeholder via HTML
+                if (input.hasAttribute('required')) {
+                    input.value = ''; // clears to placeholder via HTML for required fields
+                } else {
+                    input.value = '0'; // solid 0 for optional fields
+                }
             });
             // Reset select dropdowns
             const selects = document.querySelectorAll('#tax-form select');
