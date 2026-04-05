@@ -88,7 +88,7 @@ class TestGenericTechScenario:
 
     def test_agi(self, user_input: TaxInput) -> None:
         """Verify AGI calculation."""
-        agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary = calculate_agi(user_input)
+        agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary, _ = calculate_agi(user_input)
 
         # RSU: 200 * 250 = 50,000
         assert rsu_income == pytest.approx(50_000.0, abs=0.01)
@@ -101,7 +101,7 @@ class TestGenericTechScenario:
 
     def test_taxable_income(self, user_input: TaxInput) -> None:
         """Verify taxable income after standard deduction."""
-        agi, _, _, _, _, _ = calculate_agi(user_input)
+        agi, _, _, _, _, _, _ = calculate_agi(user_input)
         taxable, std_ded = calculate_taxable_income(
             agi, user_input.filing_status, user_input.tax_year
         )
@@ -120,7 +120,7 @@ class TestGenericTechScenario:
           32% on 15,950 = 5,104.00
         Total = 45,303.00
         """
-        agi, _, _, _, _, _ = calculate_agi(user_input)
+        agi, _, _, _, _, _, _ = calculate_agi(user_input)
         taxable, _ = calculate_taxable_income(agi, user_input.filing_status, user_input.tax_year)
         tax, ordinary_income = calculate_ordinary_tax(
             taxable, 10_000.0, user_input.filing_status, user_input.tax_year
@@ -131,7 +131,7 @@ class TestGenericTechScenario:
 
     def test_ltcg_tax(self, user_input: TaxInput) -> None:
         """Verify LTCG tax: $10,000 at 15% = $1,500."""
-        agi, _, _, _, _, _ = calculate_agi(user_input)
+        agi, _, _, _, _, _, _ = calculate_agi(user_input)
         taxable, _ = calculate_taxable_income(agi, user_input.filing_status, user_input.tax_year)
         ltcg_tax = calculate_ltcg_tax(
             taxable, 10_000.0, user_input.filing_status, user_input.tax_year
@@ -140,7 +140,7 @@ class TestGenericTechScenario:
 
     def test_niit(self, user_input: TaxInput) -> None:
         """Verify NIIT: 3.8% × min(10000, 239000 - 200000) = $380."""
-        agi, _, _, _, _, _ = calculate_agi(user_input)
+        agi, _, _, _, _, _, _ = calculate_agi(user_input)
         niit = calculate_niit(agi, 10_000.0, user_input.filing_status)
         assert niit == pytest.approx(380.0, abs=0.01)
 
@@ -152,6 +152,15 @@ class TestGenericTechScenario:
         assert result.tax_breakdown.short_term_capital_gains == 5_000.0
         # The STCG sits on top of ordinary income, which might cross tax brackets, but we ensure it is non-zero.
         assert result.tax_breakdown.stcg_tax > 1_000.0
+
+    def test_miscellaneous_income(self, user_input: TaxInput) -> None:
+        """Verify miscellaneous income behaves appropriately (adds to AGI, no withholding)."""
+        user_input.miscellaneous_income = 10_000.0
+        result = calculate(user_input)
+        assert result.tax_breakdown.miscellaneous_income == 10_000.0
+        assert result.tax_breakdown.agi == pytest.approx(249_000.0, abs=0.01)
+        # Should not increase total withholding (remains 36,100.0)
+        assert result.tax_breakdown.total_withholding == pytest.approx(36_100.0, abs=0.01)
 
     def test_total_tax(self, user_input: TaxInput) -> None:
         """Verify total tax ≈ $47,183."""

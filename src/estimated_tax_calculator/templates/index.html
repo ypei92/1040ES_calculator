@@ -16,6 +16,13 @@
 <body>
     <div class="app-container">
         <header class="app-header">
+            <div class="header-actions">
+                <a href="https://github.com/ypei92/1040ES_calculator" target="_blank" rel="noopener noreferrer" class="action-link" title="View Source on GitHub">
+                    <svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                </a>
+            </div>
             <div class="header-glow"></div>
             <h1>1040<span class="accent">-ES</span> Calculator</h1>
             <p class="subtitle">Calculate Minimal Quarterly Estimated Tax Payments</p>
@@ -143,21 +150,38 @@
                     </div>
                 </section>
 
-                <!-- Other Remaining Company Income -->
+                <!-- Other Incomes -->
                 <section class="card">
                     <h2 class="card-title">
                         <span class="card-icon">💼</span>
-                        Other Remaining Company Income
-                        <span class="info-tip"
-                            data-tip="Undistributed bonuses, on-call compensation, referral bonuses, signing bonus remainder, etc.; Taxed at 22% by default.">ℹ️</span>
+                        Other Incomes
                     </h2>
+
                     <div class="field">
-                        <label for="other_company_income">Est. Remaining Other Income</label>
+                        <label for="other_company_income">
+                            Est. Remaining Other Company Income
+                            <span class="tooltip-inline"
+                                data-tip="Undistributed bonuses, on-call compensation, referral bonuses, etc. Default withholding at 22% rate.">ℹ️</span>
+                        </label>
                         <div class="input-prefix">
                             <span>$</span>
                             <input type="number" id="other_company_income" name="other_company_income"
                                 value="{{ form.other_company_income if form else '0' }}" step="0.01" min="0"
                                 placeholder="5000">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="miscellaneous_income">
+                            Est. Miscellaneous & Nonemployee Income
+                            <span class="tooltip-inline"
+                                data-tip="Includes bank interest, dividends, sign-up bonuses, and referral rewards. Default withholding at 0% rate.">ℹ️</span>
+                        </label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="miscellaneous_income" name="miscellaneous_income"
+                                value="{{ form.miscellaneous_income if form else '0' }}" step="0.01" min="0"
+                                placeholder="1000">
                         </div>
                     </div>
                 </section>
@@ -255,7 +279,8 @@
                     <table class="result-table">
                         <tbody>
                             <tr>
-                                <td colspan="2" style="padding-top: 0.5rem; padding-bottom: 0.25rem; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright); opacity: 0.9;">
+                                <td colspan="2"
+                                    style="padding-top: 0.5rem; padding-bottom: 0.25rem; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright); opacity: 0.9;">
                                     Ordinary Income
                                 </td>
                             </tr>
@@ -281,6 +306,12 @@
                             <tr class="sub-row">
                                 <td class="indent">↳ Other Company Income</td>
                                 <td class="amount dim">{{ result.tax_breakdown.other_company_income | currency }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if result.tax_breakdown.miscellaneous_income > 0 %}
+                            <tr>
+                                <td>Est. Miscellaneous & Nonemployee Income</td>
+                                <td class="amount">{{ result.tax_breakdown.miscellaneous_income | currency }}</td>
                             </tr>
                             {% endif %}
                             {% if result.tax_breakdown.short_term_capital_gains != 0 %}
@@ -310,11 +341,13 @@
                         <tbody>
                             <tr>
                                 <td>Standard Deduction</td>
-                                <td class="amount deduction">−{{ result.tax_breakdown.standard_deduction | currency }}</td>
+                                <td class="amount deduction">−{{ result.tax_breakdown.standard_deduction | currency }}
+                                </td>
                             </tr>
                             <tr class="total-row highlight">
                                 <td><strong>Taxable Ordinary Income</strong></td>
-                                <td class="amount"><strong>{{ result.tax_breakdown.ordinary_income | currency }}</strong></td>
+                                <td class="amount"><strong>{{ result.tax_breakdown.ordinary_income | currency
+                                        }}</strong></td>
                             </tr>
                             <tr>
                                 <td>Ordinary Income Tax

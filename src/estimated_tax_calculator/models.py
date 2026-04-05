@@ -60,6 +60,14 @@ class TaxInput(BaseModel):
         ),
     )
 
+    miscellaneous_income: float = Field(
+        default=0.0,
+        ge=0,
+        description=(
+            "Miscellaneous income (freelance, interest, dividends, etc.)"
+        ),
+    )
+
     # Capital gains
     short_term_capital_gains: float = Field(
         default=0.0,
@@ -100,6 +108,7 @@ class TaxBreakdown(BaseModel):
     remaining_base_salary: float
     rsu_income: float
     other_company_income: float
+    miscellaneous_income: float
     short_term_capital_gains: float
     long_term_capital_gains: float
     agi: float

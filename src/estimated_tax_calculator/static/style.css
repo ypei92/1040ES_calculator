@@ -112,6 +112,33 @@ body::before {
     position: relative;
 }
 
+.header-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: var(--space-md);
+    z-index: 10;
+}
+
+.action-link {
+    color: var(--text-secondary);
+    transition: color var(--transition-base), transform var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-link:hover {
+    color: var(--accent-bright);
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.1);
+}
+
 .header-glow {
     position: absolute;
     top: -60px;

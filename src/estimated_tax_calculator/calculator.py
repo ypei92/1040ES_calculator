@@ -56,7 +56,7 @@ def calculate_agi(tax_input: TaxInput) -> tuple[float, float, float, float, floa
         tax_input: User-provided tax inputs.
 
     Returns:
-        Tuple of (agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary).
+        Tuple of (agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary, miscellaneous_income).
     """
     remaining_base_salary = (
         tax_input.estimated_income_per_paycheck
@@ -75,11 +75,12 @@ def calculate_agi(tax_input: TaxInput) -> tuple[float, float, float, float, floa
 
     agi = (
         w2_income
+        + tax_input.miscellaneous_income
         + tax_input.short_term_capital_gains
         + tax_input.long_term_capital_gains
     )
 
-    return agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary
+    return agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary, tax_input.miscellaneous_income
 
 
 def calculate_taxable_income(
@@ -323,7 +324,7 @@ def calculate(tax_input: TaxInput) -> TaxResult:
         Complete TaxResult with breakdown and recommendations.
     """
     # Step 1: AGI
-    agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary = calculate_agi(tax_input)
+    agi, w2_income, rsu_income, current_w2, remaining_w2, remaining_base_salary, miscellaneous_income = calculate_agi(tax_input)
 
     # Step 2: Taxable income
     taxable_income, std_ded = calculate_taxable_income(
@@ -386,6 +387,7 @@ def calculate(tax_input: TaxInput) -> TaxResult:
         remaining_base_salary=remaining_base_salary,
         rsu_income=rsu_income,
         other_company_income=tax_input.other_company_income,
+        miscellaneous_income=miscellaneous_income,
         short_term_capital_gains=tax_input.short_term_capital_gains,
         long_term_capital_gains=ltcg,
         agi=agi,
