@@ -98,4 +98,67 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    /* =========================================
+       Header Actions Logic
+       ========================================= */
+
+    // --- Reset Form Logic ---
+    const resetBtn = document.getElementById('reset-button');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            // Soft clear all inputs
+            const inputs = document.querySelectorAll('#tax-form input[type="number"]');
+            inputs.forEach(input => {
+                input.value = ''; // clears to placeholder via HTML
+            });
+            // Reset select dropdowns
+            const selects = document.querySelectorAll('#tax-form select');
+            selects.forEach(select => {
+                select.selectedIndex = 0;
+            });
+            // Hide the results section dynamically if it exists
+            if (resultsSection) {
+                resultsSection.style.display = 'none';
+            }
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // --- Theme Toggle Logic ---
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const moonIcon = document.getElementById('moon-icon');
+    const sunIcon = document.getElementById('sun-icon');
+    
+    // Function to apply theme
+    function applyTheme(isLight) {
+        if (isLight) {
+            document.documentElement.classList.add('light-theme');
+            if (moonIcon) moonIcon.style.display = 'none';
+            if (sunIcon) sunIcon.style.display = 'block';
+        } else {
+            document.documentElement.classList.remove('light-theme');
+            if (moonIcon) moonIcon.style.display = 'block';
+            if (sunIcon) sunIcon.style.display = 'none';
+        }
+    }
+
+    // Check system preference & localStorage
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    const isInitialLight = savedTheme === 'light' || (!savedTheme && systemPrefersLight);
+    
+    // Apply initial theme
+    applyTheme(isInitialLight);
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const currentlyLight = document.documentElement.classList.contains('light-theme');
+            const newIsLight = !currentlyLight;
+            
+            applyTheme(newIsLight);
+            localStorage.setItem('theme', newIsLight ? 'light' : 'dark');
+        });
+    }
 });
