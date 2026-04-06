@@ -4,32 +4,63 @@ A Python project to calculate quarterly 1040ES estimated tax payments.
 
 ## Privacy & Legal
 
-**⚠️ Not Financial Advice:** This application is built for educational and estimation purposes only. The tax calculations provided do not constitute official financial, legal, or tax advice. Please consult a certified CPA for personalized tax advice.
+**⚠️ Not Financial Advice:** This application is built for educational and estimation
+purposes only. The tax calculations provided do not constitute official financial,
+legal, or tax advice. Please consult a certified CPA for personalized tax advice.
 
-**🔒 Data Privacy:** This application is entirely stateless. When you submit your financial numbers via the web form, they are held strictly in short-lived memory (RAM) just long enough to perform the math and return the results to your browser. Your financial inputs are **never** logged, never saved to any database, never written to the server's disk, and never transmitted to external telemetry or third-party services.
+**🔒 Data Privacy:** This application is entirely stateless. When you submit your
+financial numbers via the web form, they are held strictly in short-lived memory (RAM)
+just long enough to perform the math and return the results to your browser. Your
+financial inputs are **never** logged, never saved to any database, never written to
+the server's disk, and never transmitted to external telemetry or third-party
+services.
 
-## Project Setup
+## Deployment (Docker)
 
-This project uses `uv` for dependency management and requires a Conda environment.
+The easiest way to host this application is using Docker. The image is automatically
+built and hosted on Docker Hub.
 
-1. Ensure you have the Conda environment activated:
-   ```bash
-   conda activate 1040es_py312
+1. Create a `docker-compose.yml` file on your server or local machine:
+
+   ```yaml
+   services:
+     tax-calculator:
+       image: ypei92/1040es-calculator:latest
+       container_name: 1040es-calculator
+       restart: unless-stopped
+       ports:
+         - "8765:8765"
    ```
 
-2. Install dependencies via `uv`:
+2. Start the container in the background:
+
    ```bash
-   uv pip install -e .
-   uv pip install -e ".[dev]"
+   docker compose up -d
    ```
 
-3. Setup pre-commit:
+3. The application will be immediately available at `http://localhost:8765`.
+
+## Local Development Setup
+
+1. Set up the Python virtual environment using e.g. `uv`, `conda` or `venv`.
+2. Install dependencies (including development tools):
+
    ```bash
+   pip install -e ".[dev]"
    pre-commit install
    ```
 
-## Testing
-Run the tests using pytest:
+## Testing & Running Manually
+
+To manually run the development server locally without Docker:
+
 ```bash
+# Ensure src is in PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:$(pwd)/src
+
+# Run tests
 pytest tests/
+
+# Start local server
+python -m uvicorn estimated_tax_calculator.app:app --host 127.0.0.1 --port 8765
 ```

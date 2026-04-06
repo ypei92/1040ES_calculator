@@ -15,7 +15,7 @@ dependencies = [
     "python-multipart>=0.0.9",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "ruff>=0.3.0",
