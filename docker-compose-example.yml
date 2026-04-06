@@ -1,0 +1,7 @@
+services:
+  tax-calculator:
+    image: ypei92/1040es-calculator:latest
+    container_name: 1040es-calculator
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
