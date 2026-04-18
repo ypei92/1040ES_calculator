@@ -8,12 +8,14 @@ A Python project to calculate quarterly 1040ES estimated tax payments.
 purposes only. The tax calculations provided do not constitute official financial,
 legal, or tax advice. Please consult a certified CPA for personalized tax advice.
 
-**🔒 Data Privacy:** This application is entirely stateless. When you submit your
-financial numbers via the web form, they are held strictly in short-lived memory (RAM)
-just long enough to perform the math and return the results to your browser. Your
-financial inputs are **never** logged, never saved to any database, never written to
-the server's disk, and never transmitted to external telemetry or third-party
-services.
+**🔒 Data Privacy:** This application is entirely stateless. Your financial inputs are
+held strictly in short-lived memory (RAM) just long enough to perform the math and
+return the results. Your inputs are **never** logged, saved to any database, or
+transmitted to third parties.
+
+To see how many people use this tool, we use a self-hosted, privacy-first analytics
+tracker ([Umami](https://umami.is)). It does not use cookies, strictly anonymizes IP
+addresses, and never tracks the financial numbers you enter into the calculator.
 
 ## Deployment (Docker)
 
